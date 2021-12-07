@@ -47,21 +47,21 @@ public class DomainTimer {
 //                .setAccessKeySecret(accessKeySecret);
 
 // 访问的域名
-        config.endpoint = "alidns.cn-hangzhou.aliyuncs.com";
-
-
-        Client client = new Client(config);
-
-        DescribeCustomLineRequest request = new DescribeCustomLineRequest();
-
-        request.LineId = "1"; // 该参数值为假设值，请您根据实际情况进行填写
-
-        request.Lang = "test"; // 该参数值为假设值，请您根据实际情况进行填写
-
-        DescribeCustomLineResponse response = client.describeCustomLine(request);
-        System.out.println(new Gson().toJson(response.Body));
-
-        String requestId = response.Body.requestId;
+//        config.endpoint = "alidns.cn-hangzhou.aliyuncs.com";
+//
+//
+//        Client client = new Client(config);
+//
+//        DescribeCustomLineRequest request = new DescribeCustomLineRequest();
+//
+//        request.LineId = "1"; // 该参数值为假设值，请您根据实际情况进行填写
+//
+//        request.Lang = "test"; // 该参数值为假设值，请您根据实际情况进行填写
+//
+//        DescribeCustomLineResponse response = client.describeCustomLine(request);
+//        System.out.println(new Gson().toJson(response.Body));
+//
+//        String requestId = response.Body.requestId;
 
     }
 }
