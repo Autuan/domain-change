@@ -1,7 +1,9 @@
 package top.autuan.domainchange.timer;
 
 import ch.qos.logback.core.net.server.Client;
+import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSON;
 import cn.hutool.json.JSONObject;
 import com.aliyun.credentials.models.Config;
@@ -75,12 +77,36 @@ public class DomainTimer {
 
     public static void main(String[] args) throws IOException {
 //        managerCheck();
+        apiCheck();
     }
 
 
     public static void apiCheck(){
         // api.keqidao.com 无法访问 且 主要机器无法响应
         // 处理策略：域名 api.keqidao.com 重新解析到 uat服务器
+        try {
+
+        String post = HttpUtil.post("https://api.keqidao.com/config/canal/verificationVersion", "{\n" +
+                "    \"canalName\":\"android\"\n" +
+                "}", 5);
+
+        // 如果正常检查一下现在相关的解析是不是在主服务器上，如果不是，改到主服务器
+
+        System.out.println(post);
+        }
+        catch (IORuntimeException e) {
+            if("SocketTimeoutException: Read timed out".equals(e.getMessage())) {
+                // todo 立即重新加载 ； 3次后 切换域名解析到腾讯云环境
+                // todo 发送钉钉
+                // todo 修改域名
+                AliyunDomainUtil.updateDomainRecord("123","uapi","192.168.0.0");
+
+
+            }
+        }
+        catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
     }
     public static void managerCheck(){
         List<CheckItem> list = new ArrayList<>(2);

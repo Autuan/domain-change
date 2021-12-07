@@ -14,6 +14,18 @@ import lombok.SneakyThrows;
 import java.rmi.ServerException;
 
 public class AliyunDomainUtil {
+    // todo modifyProd  方法
+    // todo modifyBackup 方法
+    // todo config single
+
+    // todo 实现
+    public static void updateDomainRecord(String recordId,String prefix,String value){
+//        String recordId = "";
+//        String prefix = "";
+
+    }
+
+    @Deprecated
     @SneakyThrows
     public static void main(String[] args) {
         // https://next.api.aliyun.com/api-tools/sdk/Alidns?spm=a2c4g.11186623.0.0.30bc12d4kjja9M&version=2015-01-09&language=java-tea
