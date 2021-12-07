@@ -74,10 +74,14 @@ public class DomainTimer {
     }
 
     public static void main(String[] args) throws IOException {
-        managerCheck();
+//        managerCheck();
     }
 
 
+    public static void apiCheck(){
+        // api.keqidao.com 无法访问 且 主要机器无法响应
+        // 处理策略：域名 api.keqidao.com 重新解析到 uat服务器
+    }
     public static void managerCheck(){
         List<CheckItem> list = new ArrayList<>(2);
         list.add(CheckItem.builder()
