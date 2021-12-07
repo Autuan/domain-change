@@ -1,15 +1,22 @@
 package top.autuan.domainchange.timer;
 
 import ch.qos.logback.core.net.server.Client;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSON;
+import cn.hutool.json.JSONObject;
 import com.aliyun.credentials.models.Config;
 import com.aliyun.tea.TeaModel;
 import com.google.gson.Gson;
 import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
+import top.autuan.domainchange.domain.check.CheckItem;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -67,66 +74,56 @@ public class DomainTimer {
     }
 
     public static void main(String[] args) throws IOException {
-        String url = "https://umanager.keqidao.com/";
-//        Connection.Response response = Jsoup.connect(url).execute();
-        try {
-
-        Connection.Response response = Jsoup.connect(url).execute();
-        }
-        catch (HttpStatusException e) {
-            String reqUrl = e.getUrl();
-            int statusCode = e.getStatusCode();
-            String message = e.getMessage();
-
-            System.out.println(reqUrl);
-            System.out.println(statusCode);
-            System.out.println(message);
-
-            // 钉钉推送 todo
-            DingTalkUtil.send("502ERROR");
-
-            // jenkins 重启
-        }
-        catch (Exception e) {
-            System.out.println(e.getMessage());
-
-        }
-//        String s = response.statusMessage();
-//        System.out.println(s);
-//        int code = response.statusCode();
-//        System.out.println(code);
+        managerCheck();
     }
 
 
-    public void managerCheck(){
-        String url = "https://umanager.keqidao.com/";
-//        Connection.Response response = Jsoup.connect(url).execute();
-        try {
+    public static void managerCheck(){
+        List<CheckItem> list = new ArrayList<>(2);
+        list.add(CheckItem.builder()
+                .domain("https://umanager.keqidao.com/")
+                .jobName("uat-qidao-manager")
+                .branch("master")
+                .build());
+        list.add(CheckItem.builder()
+                .domain("https://manager.keqidao.com/")
+                .jobName("prod-qidao-manager")
+                .branch("1.7.3")
+                .build());
 
-            Connection.Response response = Jsoup.connect(url).execute();
-        }
-        catch (HttpStatusException e) {
-            String reqUrl = e.getUrl();
-            int statusCode = e.getStatusCode();
-            String message = e.getMessage();
-
-            System.out.println(reqUrl);
-            System.out.println(statusCode);
-            System.out.println(message);
-
-            // 500 或 502 重启
-            if(statusCode == 500 || statusCode == 502) {
-                String sendMsg = "";
-                // 钉钉推送 todo
-                DingTalkUtil.send("502ERROR");
-                // jenkins 重启
-                JenkinsCliUtil.build("uat-qidao-manager","master");
+        for(CheckItem item : list) {
+            try {
+                Connection.Response response = Jsoup.connect(item.getDomain()).execute();
+                int code = response.statusCode();
+                String msg = response.statusMessage();
+                System.out.println(code);
+                System.out.println(msg);
             }
+            catch (HttpStatusException e) {
+                int statusCode = e.getStatusCode();
+                // 500 或 502 重启
+                if(statusCode == 500 || statusCode == 502) {
+                    String template = "message ：服务器检查异常 \\n  "
+                            + "检查时间 : {}  \\n"
+                            + "访问域名 : {}  \\n\\n"
+                            + "执行异常处理策略 ： 重启服务"
+                            + "Jenkins 任务名称 : {}"
+                            + "服务分支 : {}"
+                            ;
 
-        }
-        catch (Exception e) {
-            System.out.println(e.getMessage());
-            DingTalkUtil.send(e.getMessage());
+                    String sendMsg = StrUtil.format(template, LocalDateTime.now(), item.getDomain(), item.getJobName(), item.getBranch());
+                    // 钉钉推送 todo
+                    DingTalkUtil.send(sendMsg);
+
+                    // jenkins 重启
+                    JenkinsCliUtil.build(item.getJobName(),item.getBranch());
+                }
+
+            }
+            catch (Exception e) {
+                System.out.println(e.getMessage());
+                DingTalkUtil.send(e.getMessage());
+            }
         }
     }
 }
