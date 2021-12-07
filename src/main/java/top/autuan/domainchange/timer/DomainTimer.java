@@ -113,11 +113,16 @@ public class DomainTimer {
             System.out.println(reqUrl);
             System.out.println(statusCode);
             System.out.println(message);
-            String sendMsg = "";
-            // 钉钉推送 todo
-            DingTalkUtil.send("502ERROR");
 
-            // jenkins 重启
+            // 500 或 502 重启
+            if(statusCode == 500 || statusCode == 502) {
+                String sendMsg = "";
+                // 钉钉推送 todo
+                DingTalkUtil.send("502ERROR");
+                // jenkins 重启
+                JenkinsCliUtil.build("uat-qidao-manager","master");
+            }
+
         }
         catch (Exception e) {
             System.out.println(e.getMessage());
