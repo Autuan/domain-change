@@ -5,6 +5,7 @@ import com.aliyun.credentials.models.Config;
 import com.aliyun.tea.TeaModel;
 import com.google.gson.Gson;
 import org.jsoup.Connection;
+import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 
 import java.io.IOException;
@@ -63,5 +64,64 @@ public class DomainTimer {
 //
 //        String requestId = response.Body.requestId;
 
+    }
+
+    public static void main(String[] args) throws IOException {
+        String url = "https://umanager.keqidao.com/";
+//        Connection.Response response = Jsoup.connect(url).execute();
+        try {
+
+        Connection.Response response = Jsoup.connect(url).execute();
+        }
+        catch (HttpStatusException e) {
+            String reqUrl = e.getUrl();
+            int statusCode = e.getStatusCode();
+            String message = e.getMessage();
+
+            System.out.println(reqUrl);
+            System.out.println(statusCode);
+            System.out.println(message);
+
+            // 钉钉推送 todo
+            DingTalkUtil.send("502ERROR");
+
+            // jenkins 重启
+        }
+        catch (Exception e) {
+            System.out.println(e.getMessage());
+
+        }
+//        String s = response.statusMessage();
+//        System.out.println(s);
+//        int code = response.statusCode();
+//        System.out.println(code);
+    }
+
+
+    public void managerCheck(){
+        String url = "https://umanager.keqidao.com/";
+//        Connection.Response response = Jsoup.connect(url).execute();
+        try {
+
+            Connection.Response response = Jsoup.connect(url).execute();
+        }
+        catch (HttpStatusException e) {
+            String reqUrl = e.getUrl();
+            int statusCode = e.getStatusCode();
+            String message = e.getMessage();
+
+            System.out.println(reqUrl);
+            System.out.println(statusCode);
+            System.out.println(message);
+            String sendMsg = "";
+            // 钉钉推送 todo
+            DingTalkUtil.send("502ERROR");
+
+            // jenkins 重启
+        }
+        catch (Exception e) {
+            System.out.println(e.getMessage());
+            DingTalkUtil.send(e.getMessage());
+        }
     }
 }
