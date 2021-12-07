@@ -12,6 +12,9 @@ import com.google.gson.Gson;
 import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 import top.autuan.domainchange.domain.check.CheckItem;
 
 import java.io.IOException;
@@ -22,9 +25,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *  主机检查
+ * 主机检查
  */
+@Component
 public class DomainTimer {
+    @Autowired
+    private AliyunDomainUtil aliyunDomainUtil;
+
     public void check() throws IOException {
         String url = "app.keqidao.com";
         // 检查域名可访问性
@@ -40,7 +47,7 @@ public class DomainTimer {
     }
 
     private void updateDomain() throws Exception {
-        Map<String,String> accessMap = new HashMap();
+        Map<String, String> accessMap = new HashMap();
         accessMap.put("accessKeyId", "accessKeyId");
         accessMap.put("accessKeySecret", "accessKeySecret");
 
@@ -77,38 +84,38 @@ public class DomainTimer {
 
     public static void main(String[] args) throws IOException {
 //        managerCheck();
-        apiCheck();
+//        apiCheck();
     }
 
 
-    public static void apiCheck(){
+    public void apiCheck() {
         // api.keqidao.com 无法访问 且 主要机器无法响应
         // 处理策略：域名 api.keqidao.com 重新解析到 uat服务器
         try {
 
-        String post = HttpUtil.post("https://api.keqidao.com/config/canal/verificationVersion", "{\n" +
-                "    \"canalName\":\"android\"\n" +
-                "}", 5);
+            String post = HttpUtil.post("https://api.keqidao.com/config/canal/verificationVersion", "{\n" +
+                    "    \"canalName\":\"android\"\n" +
+                    "}", 5);
 
-        // 如果正常检查一下现在相关的解析是不是在主服务器上，如果不是，改到主服务器
+            // todo 如果正常检查一下现在相关的解析是不是在主服务器上，如果不是，改到主服务器
+            aliyunDomainUtil.modifyProd();
+//            AliyunDomainUtil.modifyProd();
 
-        System.out.println(post);
-        }
-        catch (IORuntimeException e) {
-            if("SocketTimeoutException: Read timed out".equals(e.getMessage())) {
+            System.out.println(post);
+
+        } catch (IORuntimeException e) {
+            if ("SocketTimeoutException: Read timed out".equals(e.getMessage())) {
                 // todo 立即重新加载 ； 3次后 切换域名解析到腾讯云环境
                 // todo 发送钉钉
                 // todo 修改域名
-                AliyunDomainUtil.updateDomainRecord("123","uapi","192.168.0.0");
-
-
+                aliyunDomainUtil.modifyBackup();
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             System.out.println(e.getMessage());
         }
     }
-    public static void managerCheck(){
+
+    public static void managerCheck() {
         List<CheckItem> list = new ArrayList<>(2);
         list.add(CheckItem.builder()
                 .domain("https://umanager.keqidao.com/")
@@ -121,39 +128,42 @@ public class DomainTimer {
                 .branch("1.7.3")
                 .build());
 
-        for(CheckItem item : list) {
+        for (CheckItem item : list) {
             try {
                 Connection.Response response = Jsoup.connect(item.getDomain()).execute();
                 int code = response.statusCode();
                 String msg = response.statusMessage();
                 System.out.println(code);
                 System.out.println(msg);
-            }
-            catch (HttpStatusException e) {
+            } catch (HttpStatusException e) {
                 int statusCode = e.getStatusCode();
                 // 500 或 502 重启
-                if(statusCode == 500 || statusCode == 502) {
+                if (statusCode == 500 || statusCode == 502) {
                     String template = "message ：服务器检查异常 \\n  "
                             + "检查时间 : {}  \\n"
                             + "访问域名 : {}  \\n\\n"
                             + "执行异常处理策略 ： 重启服务"
                             + "Jenkins 任务名称 : {}"
-                            + "服务分支 : {}"
-                            ;
+                            + "服务分支 : {}";
 
                     String sendMsg = StrUtil.format(template, LocalDateTime.now(), item.getDomain(), item.getJobName(), item.getBranch());
                     // 钉钉推送 todo
                     DingTalkUtil.send(sendMsg);
 
                     // jenkins 重启
-                    JenkinsCliUtil.build(item.getJobName(),item.getBranch());
+                    JenkinsCliUtil.build(item.getJobName(), item.getBranch());
                 }
 
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 System.out.println(e.getMessage());
                 DingTalkUtil.send(e.getMessage());
             }
         }
+    }
+
+    @Scheduled(cron = "0/5 * * * * ? ")
+    public void test(){
+        System.out.println("run test 0/5 * * * * ? ");
+        aliyunDomainUtil.tempPrintf();
     }
 }

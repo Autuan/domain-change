@@ -10,12 +10,25 @@ import com.aliyun.alidns20150109.models.UpdateDomainRecordResponse;
 import com.aliyun.teaopenapi.models.Config;
 import com.google.gson.Gson;
 import lombok.SneakyThrows;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import top.autuan.domainchange.domain.record.ApiProd;
+import top.autuan.domainchange.domain.record.BaseRecord;
+import top.autuan.domainchange.domain.record.RootProd;
+import top.autuan.domainchange.domain.record.WwwProd;
 
 import java.rmi.ServerException;
 
+@Component
 public class AliyunDomainUtil {
     private static Client client;
 
+    @Autowired
+    private ApiProd apiProd;
+    @Autowired
+    private RootProd rootProd;
+    @Autowired
+    private WwwProd wwwProd;
     static {
         try {
             client = new Client(new Config()
@@ -28,6 +41,11 @@ public class AliyunDomainUtil {
         }
     }
 
+    public void tempPrintf(){
+        System.out.println(JSONUtil.toJsonStr(apiProd));
+        System.out.println(JSONUtil.toJsonStr(rootProd));
+        System.out.println(JSONUtil.toJsonStr(wwwProd));
+    }
 //    @SneakyThrows
 //    public AliyunDomainUtil() {
 //        // https://next.api.aliyun.com/api-tools/sdk/Alidns?spm=a2c4g.11186623.0.0.30bc12d4kjja9M&version=2015-01-09&language=java-tea
@@ -53,9 +71,21 @@ public class AliyunDomainUtil {
 //    }
 
     // todo modifyProd  方法
-    // todo modifyBackup 方法
-    // todo config single
+    public void modifyProd(){
+        updateDomainRecord(apiProd.getId(),apiProd.getPrefix(),apiProd.getValMain());
+        updateDomainRecord(wwwProd.getId(),wwwProd.getPrefix(),wwwProd.getValMain());
+        updateDomainRecord(rootProd.getId(),rootProd.getPrefix(),rootProd.getValMain());
+    }
 
+    public void modifyBackup(){
+        updateDomainRecord(apiProd.getId(),apiProd.getPrefix(),apiProd.getValBackUp());
+        updateDomainRecord(wwwProd.getId(),wwwProd.getPrefix(),wwwProd.getValBackUp());
+        updateDomainRecord(rootProd.getId(),rootProd.getPrefix(),rootProd.getValBackUp());
+
+    }
+
+//    public void updateDomainRecord(BaseRecord record){
+//    }
     @SneakyThrows
     public static void updateDomainRecord(String recordId, String prefix, String value){
         UpdateDomainRecordRequest updateDomainRecordRequest = new UpdateDomainRecordRequest()
